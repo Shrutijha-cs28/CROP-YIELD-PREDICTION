@@ -1,0 +1,122 @@
+# ============================================================
+# FILE: src/crop_config.py
+# ============================================================
+"""Crop configuration management."""
+
+import json
+from pathlib import Path
+
+class CropConfig:
+    """Manage crop-specific configurations."""
+    
+    def __init__(self, config_path='config/crop_config.json'):
+        """Initialize crop config.
+        
+        Args:
+            config_path: Path to crop configuration JSON file
+        """
+        self.config_path = config_path
+        self.config = self.load_config()
+        self.crops = list(self.config['crops'].keys())
+    
+    def load_config(self):
+        """Load crop configuration from JSON."""
+        with open(self.config_path, 'r') as f:
+            return json.load(f)
+    
+    def get_crop_config(self, crop_name):
+        """Get configuration for specific crop.
+        
+        Args:
+            crop_name: Name of crop
+            
+        Returns:
+            Dictionary with crop configuration
+        """
+        if crop_name not in self.config['crops']:
+            raise ValueError(f"Crop '{crop_name}' not supported. Choose from: {self.crops}")
+        return self.config['crops'][crop_name]
+    
+    def get_sowing_month(self, crop_name):
+        """Get sowing month for crop.
+        
+        Args:
+            crop_name: Name of crop
+            
+        Returns:
+            Sowing month (1-12)
+        """
+        return self.get_crop_config(crop_name)['sowing_month']
+    
+    def get_presowing_month(self, crop_name):
+        """Get pre-sowing month for crop.
+        
+        Args:
+            crop_name: Name of crop
+            
+        Returns:
+            Pre-sowing month (1-12)
+        """
+        return self.get_crop_config(crop_name)['presowing_month']
+    
+    def get_key_features(self, crop_name):
+        """Get key features for crop.
+        
+        Args:
+            crop_name: Name of crop
+            
+        Returns:
+            List of key features
+        """
+        return self.get_crop_config(crop_name)['key_features']
+    
+    def get_model_params(self, crop_name):
+        """Get model hyperparameters for crop.
+        
+        Args:
+            crop_name: Name of crop
+            
+        Returns:
+            Dictionary with model parameters
+        """
+        crop_config = self.get_crop_config(crop_name)
+        return {
+            'epochs': crop_config.get('model_epochs', 150),
+            'learning_rate': crop_config.get('learning_rate', 0.001),
+            'batch_size': crop_config.get('batch_size', 32)
+        }
+    
+    def get_all_crops(self):
+        """Get list of all supported crops.
+        
+        Returns:
+            List of crop names
+        """
+        return self.crops
+    
+    def print_crop_info(self, crop_name):
+        """Print detailed information about crop.
+        
+        Args:
+            crop_name: Name of crop
+        """
+        config = self.get_crop_config(crop_name)
+        print(f"\n{'='*60}")
+        print(f"CROP: {config['crop_name'].upper()}")
+        print(f"{'='*60}")
+        for key, value in config.items():
+            if key != 'crop_name':
+                print(f"{key:.<35} {value}")
+        print(f"{'='*60}\n")
+    
+    def print_all_crops(self):
+        """Print all supported crops."""
+        print(f"\n{'='*60}")
+        print("SUPPORTED CROPS")
+        print(f"{'='*60}")
+        for i, crop in enumerate(self.crops, 1):
+            config = self.get_crop_config(crop)
+            season = config['season']
+            sowing = config['sowing_month']
+            print(f"{i}. {config['crop_name']:.<30} {season:.<15} (Month {sowing})")
+        print(f"{'='*60}\n")
