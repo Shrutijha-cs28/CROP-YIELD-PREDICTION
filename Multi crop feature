@@ -1,0 +1,194 @@
+# ============================================================
+# FILE: src/multi_crop_feature_engineer.py
+# ============================================================
+"""Multi-crop feature engineering with pre-sowing emphasis."""
+
+import pandas as pd
+import numpy as np
+from src.crop_config import CropConfig
+
+class MultiCropFeatureEngineer:
+    """Engineer features for different crops with pre-sowing emphasis."""
+    
+    def __init__(self):
+        """Initialize feature engineer."""
+        self.crop_config = CropConfig()
+        self.presowing_importance_factor = 1.5
+    
+    def engineer_features_for_crop(self, data, crop_name):
+        """Engineer features tailored to specific crop.
+        
+        Args:
+            data: DataFrame with raw features
+            crop_name: Name of crop
+            
+        Returns:
+            DataFrame with engineered features
+        """
+        print(f"\nEngineering features for {crop_name.upper()}...")
+        
+        config = self.crop_config.get_crop_config(crop_name)
+        presowing_month = config['presowing_month']
+        
+        # Identify pre-sowing data
+        if 'month' in data.columns:
+            data['is_presowing_month'] = data['month'] == presowing_month
+        
+        # Engineer crop-specific features
+        if crop_name == 'rice':
+            data = self._engineer_rice_features(data)
+        elif crop_name == 'wheat':
+            data = self._engineer_wheat_features(data)
+        elif crop_name == 'maize':
+            data = self._engineer_maize_features(data)
+        elif crop_name == 'makhana':
+            data = self._engineer_makhana_features(data)
+        elif crop_name == 'lychee':
+            data = self._engineer_lychee_features(data)
+        elif crop_name == 'oilseed':
+            data = self._engineer_oilseed_features(data)
+        elif crop_name == 'sugarcane':
+            data = self._engineer_sugarcane_features(data)
+        elif crop_name == 'pulses':
+            data = self._engineer_pulses_features(data)
+        
+        return data
+    
+    def _engineer_rice_features(self, data):
+        """Engineer rice-specific features."""
+        print("  → Applying rice-specific feature engineering")
+        
+        if 'rainfall' in data.columns and 'is_presowing_month' in data.columns:
+            data['rainfall_presowing'] = np.where(
+                data['is_presowing_month'],
+                data['rainfall'] * self.presowing_importance_factor,
+                data['rainfall']
+            )
+        
+        if 'humidity' in data.columns:
+            data['humidity_presowing'] = np.where(
+                data['is_presowing_month'],
+                data['humidity'] * self.presowing_importance_factor,
+                data['humidity']
+            )
+        
+        return data
+    
+    def _engineer_wheat_features(self, data):
+        """Engineer wheat-specific features."""
+        print("  → Applying wheat-specific feature engineering")
+        
+        if 'temperature' in data.columns and 'is_presowing_month' in data.columns:
+            data['temperature_presowing'] = np.where(
+                data['is_presowing_month'],
+                data['temperature'] * self.presowing_importance_factor,
+                data['temperature']
+            )
+        
+        if 'soil_nitrogen' in data.columns:
+            data['soil_nitrogen_presowing'] = np.where(
+                data['is_presowing_month'],
+                data['soil_nitrogen'] * self.presowing_importance_factor,
+                data['soil_nitrogen']
+            )
+        
+        return data
+    
+    def _engineer_maize_features(self, data):
+        """Engineer maize-specific features."""
+        print("  → Applying maize-specific feature engineering")
+        
+        if 'temperature' in data.columns and 'rainfall' in data.columns:
+            data['temp_rainfall_interaction'] = data['temperature'] * data['rainfall']
+        
+        if 'soil_ph' in data.columns and 'is_presowing_month' in data.columns:
+            data['soil_ph_presowing'] = np.where(
+                data['is_presowing_month'],
+                data['soil_ph'] * self.presowing_importance_factor,
+                data['soil_ph']
+            )
+        
+        return data
+    
+    def _engineer_makhana_features(self, data):
+        """Engineer makhana-specific features."""
+        print("  → Applying makhana-specific feature engineering")
+        
+        if 'water_depth' in data.columns and 'is_presowing_month' in data.columns:
+            data['water_depth_presowing'] = np.where(
+                data['is_presowing_month'],
+                data['water_depth'] * self.presowing_importance_factor,
+                data['water_depth']
+            )
+        
+        if 'light_intensity' in data.columns:
+            data['light_presowing'] = np.where(
+                data['is_presowing_month'],
+                data['light_intensity'] * self.presowing_importance_factor,
+                data['light_intensity']
+            )
+        
+        return data
+    
+    def _engineer_lychee_features(self, data):
+        """Engineer lychee-specific features."""
+        print("  → Applying lychee-specific feature engineering")
+        
+        if 'temperature_max' in data.columns and 'temperature_min' in data.columns:
+            data['temperature_range'] = data['temperature_max'] - data['temperature_min']
+        
+        if 'month' in data.columns:
+            critical_months = [7, 8, 9]
+            data['is_critical_period'] = data['month'].isin(critical_months).astype(int)
+        
+        return data
+    
+    def _engineer_oilseed_features(self, data):
+        """Engineer oilseed-specific features."""
+        print("  → Applying oilseed-specific feature engineering")
+        
+        if 'day_length' in data.columns and 'is_presowing_month' in data.columns:
+            data['day_length_presowing'] = np.where(
+                data['is_presowing_month'],
+                data['day_length'] * self.presowing_importance_factor,
+                data['day_length']
+            )
+        
+        if 'frost_occurrence' in data.columns:
+            data['frost_risk_presowing'] = np.where(
+                data['is_presowing_month'],
+                data['frost_occurrence'] * self.presowing_importance_factor,
+                data['frost_occurrence']
+            )
+        
+        return data
+    
+    def _engineer_sugarcane_features(self, data):
+        """Engineer sugarcane-specific features."""
+        print("  → Applying sugarcane-specific feature engineering")
+        
+        if 'rainfall' in data.columns and 'sunshine_hours' in data.columns:
+            data['water_sun_balance'] = (data['rainfall'] / 100) * (data['sunshine_hours'] / 24)
+        
+        if 'soil_nitrogen' in data.columns:
+            data['nutrient_index'] = data['soil_nitrogen']
+            if 'soil_phosphorus' in data.columns:
+                data['nutrient_index'] += data['soil_phosphorus']
+        
+        return data
+    
+    def _engineer_pulses_features(self, data):
+        """Engineer pulses-specific features."""
+        print("  → Applying pulses-specific feature engineering")
+        
+        if 'soil_nitrogen' in data.columns and 'is_presowing_month' in data.columns:
+            data['soil_n_presowing'] = np.where(
+                data['is_presowing_month'],
+                data['soil_nitrogen'] * self.presowing_importance_factor,
+                data['soil_nitrogen']
+            )
+        
+        if 'soil_ph' in data.columns:
+            data['ph_suitability'] = 1 / (np.abs(data['soil_ph'] - 6.5) + 1)
+        
+        return data
